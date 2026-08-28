@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>중앙예닮학교 오늘의 급식</title>
+  <title>중앙예닮학교 월간 급식표</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen pb-16 antialiased">
@@ -13,29 +13,41 @@
     <header class="text-center mb-8 border-b border-slate-200 pb-6">
       <span class="text-xs font-bold tracking-widest text-indigo-600 uppercase">Central Yedam School Meal System</span>
       <h1 class="text-3xl sm:text-4xl font-black text-slate-900 mt-2 tracking-tight">
-        중앙예닮학교 급식 대시보드
+        중앙예닮학교 월간 급식 대시보드
       </h1>
-      <p class="text-xs text-slate-500 mt-2">나이스(NEIS) 공공 데이터 연동 실시간 급식 안내</p>
+      <p class="text-xs text-slate-500 mt-2">한 달 치 조식·중식·석식을 한눈에 확인하세요</p>
     </header>
 
-    <div class="max-w-lg mx-auto flex justify-between items-center bg-white border border-slate-200 p-3 rounded-2xl shadow-sm mb-8">
-      <button id="prevBtn" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
-        ◀ 이전날
-      </button>
-      <div class="text-center">
-        <span id="dateText" class="text-base font-black text-slate-900 block"></span>
-        <button id="todayBtn" class="text-[11px] text-indigo-600 hover:underline font-bold mt-0.5 hidden">
-          오늘 날짜로 이동
+    <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm mb-8">
+      <div class="flex justify-between items-center max-w-md mx-auto mb-4">
+        <button id="prevMonthBtn" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+          ◀ 이전달
+        </button>
+        <span id="monthText" class="text-lg font-black text-slate-900"></span>
+        <button id="nextMonthBtn" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+          다음달 ▶
         </button>
       </div>
-      <button id="nextBtn" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
-        다음날 ▶
-      </button>
+
+      <div class="grid grid-cols-3 gap-2 text-center pt-3 border-t border-slate-100 text-xs">
+        <div class="bg-emerald-50 border border-emerald-100 p-2 rounded-xl">
+          <span class="font-extrabold text-emerald-700 block">조식</span>
+          <span class="text-emerald-600 font-medium text-[11px]">07:30 ~ 07:50</span>
+        </div>
+        <div class="bg-indigo-50 border border-indigo-100 p-2 rounded-xl">
+          <span class="font-extrabold text-indigo-700 block">중식</span>
+          <span class="text-indigo-600 font-medium text-[11px]">12:00 ~ 12:50</span>
+        </div>
+        <div class="bg-purple-50 border border-purple-100 p-2 rounded-xl">
+          <span class="font-extrabold text-purple-700 block">석식</span>
+          <span class="text-purple-600 font-medium text-[11px]">17:00 ~ 18:00</span>
+        </div>
+      </div>
     </div>
 
-    <main id="mealContainer" class="w-full">
+    <main id="monthlyContainer" class="space-y-6">
       <div class="bg-white border border-slate-200 rounded-2xl p-16 text-center shadow-sm">
-        <p class="text-sm font-bold text-slate-500">급식 정보를 불러오는 중입니다...</p>
+        <p class="text-sm font-bold text-slate-500">이번 달 급식 정보를 불러오는 중입니다...</p>
       </div>
     </main>
 
@@ -50,197 +62,153 @@
     const SCHOOL_CODE = "7531295";
     const API_KEY = "c18f1a26d702434190cb89c02059345c";
 
-    // 현재 기준 날짜
-    let currentDate = new Date();
+    let currentYearMonth = new Date(); // 현재 연/월 기준
 
-    // 백업용 주간 식단 데이터
-    const BACKUP_MEALS = {
-      "20260824": [
-        { MMEAL_SC_NM: "조식", CAL_INFO: "606.7 Kcal", DDISH_NM: "백미밥<br/>몽글계란국<br/>라구소스미트볼<br/>오이무침<br/>어묵볶음<br/>배추김치" },
-        { MMEAL_SC_NM: "중식", CAL_INFO: "937.6 Kcal", DDISH_NM: "혼합잡곡밥<br/>미역냉국<br/>브로콜리땅콩소스<br/>김치제육*온두부<br/>깍두기<br/>앙꼬절편" },
-        { MMEAL_SC_NM: "석식", CAL_INFO: "958.8 Kcal", DDISH_NM: "추가밥<br/>매운크림짬뽕<br/>꿀감자치즈롤까스<br/>배추김치<br/>오복지무침<br/>생과일" }
-      ],
-      "20260825": [
-        { MMEAL_SC_NM: "조식", CAL_INFO: "884.8 Kcal", DDISH_NM: "야채볶음밥<br/>베이글*크림치즈<br/>크림스프<br/>볶음김치<br/>고감콘*소스<br/>사랑해사과c주스" },
-        { MMEAL_SC_NM: "중식", CAL_INFO: "720.6 Kcal", DDISH_NM: "현미밥<br/>배추국<br/>훈제오리야채볶음<br/>건파래자반<br/>쌈무*소스<br/>깍두기" },
-        { MMEAL_SC_NM: "석식", CAL_INFO: "801.0 Kcal", DDISH_NM: "혼합잡곡밥<br/>애호박찌개<br/>무말랭이무침<br/>치즈찜닭<br/>나초샐러드<br/>배추김치" }
-      ],
-      "20260826": [
-        { MMEAL_SC_NM: "조식", CAL_INFO: "822.6 Kcal", DDISH_NM: "백미밥<br/>김치찌개<br/>오이무침<br/>하트미니카츠<br/>삼치엿장조림<br/>배추김치" },
-        { MMEAL_SC_NM: "중식", CAL_INFO: "740.5 Kcal", DDISH_NM: "산채비빔밥<br/>아욱된장국<br/>참나물오리엔탈무침<br/>셀프치킨또띠아<br/>파인애플<br/>배추김치" },
-        { MMEAL_SC_NM: "석식", CAL_INFO: "799.8 Kcal", DDISH_NM: "귀리밥<br/>콩나물국<br/>매운돼지갈비찜<br/>미역줄기볶음<br/>오징어볼<br/>배추김치" }
-      ],
-      "20260827": [
-        { MMEAL_SC_NM: "조식", CAL_INFO: "647.9 Kcal", DDISH_NM: "미니밥<br/>핫케이크*시럽<br/>베이컨구이<br/>브로콜리갈릭오븐구이<br/>에너지바<br/>배추김치" },
-        { MMEAL_SC_NM: "중식", CAL_INFO: "595.2 Kcal", DDISH_NM: "혼합잡곡밥<br/>소고기샤브샤브*2가지소스<br/>계란찜<br/>다시마무채무침<br/>대구까스*치폴레소스<br/>배추김치" },
-        { MMEAL_SC_NM: "석식", CAL_INFO: "670.9 Kcal", DDISH_NM: "스팸밥버거<br/>미소국<br/>매콤꼬치어묵<br/>블루베리샐러드<br/>짜요짜요<br/>깍두기" }
-      ],
-      "20260828": [
-        { MMEAL_SC_NM: "조식", CAL_INFO: "671.5 Kcal", DDISH_NM: "백미밥<br/>사골떡국<br/>닭살소금구이<br/>연두부냉채<br/>생과일<br/>배추김치" },
-        { MMEAL_SC_NM: "중식", CAL_INFO: "745.2 Kcal", DDISH_NM: "투움바파스타<br/>오지치즈후라이<br/>목살스테이크<br/>야채피클<br/>청포도에이드<br/>미니부시맨빵*초코잼" },
-        { MMEAL_SC_NM: "석식", CAL_INFO: "792.0 Kcal", DDISH_NM: "백미밥<br/>등뼈감자탕&수제비<br/>오이고추무침<br/>멘치까스<br/>해물파전<br/>석박지" }
-      ]
-    };
-
-    // 요청하신 배식 시간으로 변경
-    const MEAL_CONFIG = {
-      "조식": { time: "07:30 ~ 07:50", badge: "border-emerald-200 bg-emerald-50 text-emerald-700" },
-      "중식": { time: "12:00 ~ 12:50", badge: "border-indigo-200 bg-indigo-50 text-indigo-700" },
-      "석식": { time: "17:00 ~ 18:00", badge: "border-purple-200 bg-purple-50 text-purple-700" }
-    };
-
-    function formatDateStr(d) {
-      const year = d.getFullYear();
-      const month = d.getMonth() + 1;
-      const date = d.getDate();
-      const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-      return `${year}년 ${month}월 ${date}일 (${dayNames[d.getDay()]})`;
-    }
-
-    function parseMenu(dishStr) {
-      if (!dishStr) return [];
-      return dishStr.split('<br/>').map(item => {
-        const cleanName = item.replace(/\([0-9.]+\)/g, '').trim();
-        const allergyMatches = item.match(/\([0-9.]+\)/g);
-        return {
-          name: cleanName,
-          allergy: allergyMatches ? allergyMatches.join(' ') : ''
-        };
-      }).filter(item => item.name.length > 0);
-    }
-
-    function generateDynamicGuide(menuList, calInfo) {
-      if (!menuList || menuList.length === 0) return "등록된 상세 메뉴 정보가 없습니다.";
-
-      const names = menuList.map(m => m.name);
-      
-      const mainDishes = names.filter(name => 
-        name.includes("고기") || name.includes("갈비") || name.includes("제육") || 
-        name.includes("스테이크") || name.includes("불고기") || name.includes("닭") || 
-        name.includes("치킨") || name.includes("까스") || name.includes("파스타") || 
-        name.includes("찌개") || name.includes("탕") || name.includes("찜") || name.includes("오리")
-      );
-
-      const mainText = mainDishes.length > 0 ? mainDishes.join(', ') : names.slice(0, 2).join(', ');
-      
-      const calNum = parseFloat(calInfo.replace(/[^0-9.]/g, '')) || 0;
-      let calGuide = "";
-      if (calNum > 850) {
-        calGuide = "든든한 에너지를 공급하는 고열량 식단입니다.";
-      } else if (calNum > 700) {
-        calGuide = "표준 영양 균형이 우수한 적정 영양 식단입니다.";
-      } else {
-        calGuide = "소화 부담이 적은 깔끔한 라이트 식단입니다.";
+    // 백업 월간 데이터 (API 미연동 대비)
+    const BACKUP_MONTHLY = {
+      "20260824": {
+        "조식": "백미밥, 몽글계란국, 라구소스미트볼, 오이무침, 어묵볶음, 배추김치",
+        "중식": "혼합잡곡밥, 미역냉국, 브로콜리땅콩소스, 김치제육*온두부, 깍두기, 앙꼬절편",
+        "석식": "추가밥, 매운크림짬뽕, 꿀감자치즈롤까스, 배추김치, 오복지무침, 생과일"
+      },
+      "20260825": {
+        "조식": "야채볶음밥, 베이글*크림치즈, 크림스프, 볶음김치, 사랑해사과c주스",
+        "중식": "현미밥, 배추국, 훈제오리야채볶음, 건파래자반, 쌈무*소스, 깍두기",
+        "석식": "혼합잡곡밥, 애호박찌개, 무말랭이무침, 치즈찜닭, 나초샐러드, 배추김치"
+      },
+      "20260826": {
+        "조식": "백미밥, 김치찌개, 오이무침, 하트미니카츠, 삼치엿장조림, 배추김치",
+        "중식": "산채비빔밥, 아욱된장국, 참나물오리엔탈무침, 셀프치킨또띠아, 파인애플, 배추김치",
+        "석식": "귀리밥, 콩나물국, 매운돼지갈비찜, 미역줄기볶음, 오징어볼, 배추김치"
+      },
+      "20260827": {
+        "조식": "미니밥, 핫케이크*시럽, 베이컨구이, 브로콜리갈릭오븐구이, 배추김치",
+        "중식": "혼합잡곡밥, 소고기샤브샤브, 계란찜, 대구까스*치폴레소스, 배추김치",
+        "석식": "스팸밥버거, 미소국, 매콤꼬치어묵, 블루베리샐러드, 짜요짜요, 깍두기"
+      },
+      "20260828": {
+        "조식": "백미밥, 사골떡국, 닭살소금구이, 연두부냉채, 생과일, 배추김치",
+        "중식": "투움바파스타, 오지치즈후라이, 목살스테이크, 야채피클, 청포도에이드",
+        "석식": "백미밥, 등뼈감자탕&수제비, 오이고추무침, 멘치까스, 해물파전, 석박지"
       }
+    };
 
-      return `오늘의 메인 요리는 <strong>${mainText}</strong>입니다. ${calGuide}`;
+    function cleanDishName(dishStr) {
+      if (!dishStr) return "";
+      return dishStr
+        .replace(/<br\/>/g, ', ')
+        .replace(/\([0-9.]+\)/g, '')
+        .trim();
     }
 
-    async function loadMealData() {
-      const container = document.getElementById('mealContainer');
-      const dateText = document.getElementById('dateText');
-      const todayBtn = document.getElementById('todayBtn');
+    async function loadMonthlyData() {
+      const container = document.getElementById('monthlyContainer');
+      const monthText = document.getElementById('monthText');
 
-      dateText.innerText = formatDateStr(currentDate);
+      const year = currentYearMonth.getFullYear();
+      const month = String(currentYearMonth.getMonth() + 1).padStart(2, '0');
+      const ymStr = `${year}${month}`;
 
-      const isToday = currentDate.toDateString() === new Date().toDateString();
-      todayBtn.classList.toggle('hidden', isToday);
+      monthText.innerText = `${year}년 ${currentYearMonth.getMonth() + 1}월 전체 식단`;
 
-      const year = currentDate.getFullYear();
-      const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-      const day = String(currentDate.getDate()).padStart(2, '0');
-      const yyyymmdd = `${year}${month}${day}`;
+      container.innerHTML = `
+        <div class="bg-white border border-slate-200 rounded-2xl p-16 text-center shadow-sm">
+          <p class="text-sm font-bold text-slate-500">${year}년 ${currentYearMonth.getMonth() + 1}월 전체 급식 정보를 불러오는 중입니다...</p>
+        </div>
+      `;
 
-      let meals = [];
+      // 한 달 치 데이터를 날짜 파라미터(MLSV_YMD) 없이 연월(MLSV_FROM_YMD ~ MLSV_TO_YMD)로 한 번에 요청
+      const lastDay = new Date(year, currentYearMonth.getMonth() + 1, 0).getDate();
+      const fromYmd = `${ymStr}01`;
+      const toYmd = `${ymStr}${String(lastDay).padStart(2, '0')}`;
+
+      const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?KEY=${API_KEY}&Type=json&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}&SD_SCHUL_CODE=${SCHOOL_CODE}&MLSV_FROM_YMD=${fromYmd}&MLSV_TO_YMD=${toYmd}`;
+
+      let dailyMap = {};
 
       try {
-        const directUrl = `https://open.neis.go.kr/hub/mealServiceDietInfo?KEY=${API_KEY}&Type=json&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}&SD_SCHUL_CODE=${SCHOOL_CODE}&MLSV_YMD=${yyyymmdd}`;
-        const res = await fetch(directUrl);
+        const res = await fetch(url);
         const data = await res.json();
+        
         if (data.mealServiceDietInfo && data.mealServiceDietInfo[1]?.row) {
-          meals = data.mealServiceDietInfo[1].row;
+          const rows = data.mealServiceDietInfo[1].row;
+          rows.forEach(r => {
+            const dateKey = r.MLSV_YMD;
+            if (!dailyMap[dateKey]) dailyMap[dateKey] = {};
+            dailyMap[dateKey][r.MMEAL_SC_NM] = cleanDishName(r.DDISH_NM);
+          });
         }
       } catch (e) {
-        meals = BACKUP_MEALS[yyyymmdd] || [];
+        // API 연동 문제 시 백업 월간 데이터 활용
+        dailyMap = BACKUP_MONTHLY;
       }
 
-      if (!meals || meals.length === 0) {
-        meals = BACKUP_MEALS[yyyymmdd] || [];
+      if (Object.keys(dailyMap).length === 0) {
+        dailyMap = BACKUP_MONTHLY;
       }
 
-      if (meals && meals.length > 0) {
-        container.innerHTML = `
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-            ${meals.map(meal => {
-              const config = MEAL_CONFIG[meal.MMEAL_SC_NM] || {
-                time: "배식 안내",
-                badge: "border-slate-200 bg-slate-100 text-slate-700"
-              };
-              const menuList = parseMenu(meal.DDISH_NM);
-              const dynamicGuide = generateDynamicGuide(menuList, meal.CAL_INFO);
+      const dateKeys = Object.keys(dailyMap).sort();
 
-              return `
-                <div class="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition">
-                  <div>
-                    <div class="flex justify-between items-start mb-4 pb-4 border-b border-slate-100">
-                      <div>
-                        <span class="inline-block px-3 py-1 rounded-lg border text-xs font-extrabold ${config.badge}">
-                          ${meal.MMEAL_SC_NM}
-                        </span>
-                        <span class="block text-xs text-slate-500 mt-2 font-semibold">배식시간: ${config.time}</span>
-                      </div>
-                      <div class="text-right">
-                        <span class="text-xs text-slate-400 font-bold block">총 열량</span>
-                        <span class="text-sm font-black text-slate-800">${meal.CAL_INFO}</span>
-                      </div>
-                    </div>
+      if (dateKeys.length > 0) {
+        container.innerHTML = dateKeys.map(dateKey => {
+          const y = dateKey.substring(0, 4);
+          const m = parseInt(dateKey.substring(4, 6));
+          const d = parseInt(dateKey.substring(6, 8));
+          const dateObj = new Date(y, m - 1, d);
+          const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+          const dayName = dayNames[dateObj.getDay()];
 
-                    <div class="space-y-2 mb-6">
-                      <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">식단 구성</span>
-                      ${menuList.map(item => `
-                        <div class="flex justify-between items-center py-1.5 border-b border-slate-50 last:border-none">
-                          <span class="text-sm font-bold text-slate-700">${item.name}</span>
-                          ${item.allergy ? `<span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">${item.allergy}</span>` : ''}
-                        </div>
-                      `).join('')}
-                    </div>
-                  </div>
+          const meals = dailyMap[dateKey];
+          const breakfast = meals["조식"] || "식단 정보가 없습니다.";
+          const lunch = meals["중식"] || "식단 정보가 없습니다.";
+          const dinner = meals["석식"] || "식단 정보가 없습니다.";
 
-                  <div class="mt-4 pt-4 border-t border-slate-100 bg-slate-50/80 p-3.5 rounded-xl border border-slate-100">
-                    <span class="text-[11px] font-bold text-indigo-600 block mb-1">메뉴 영양 분석</span>
-                    <p class="text-xs text-slate-600 leading-relaxed">${dynamicGuide}</p>
-                  </div>
+          return `
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+              <div class="mb-3 pb-2 border-b border-slate-100 flex justify-between items-center">
+                <span class="text-base font-black text-slate-900">${y}년 ${m}월 ${d}일 (${dayName})</span>
+                <span class="text-xs text-indigo-600 font-bold bg-indigo-50 px-2.5 py-1 rounded-lg">전체 식단</span>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">조식</span>
+                  <p class="text-xs text-slate-700 mt-2 leading-relaxed font-medium">${breakfast}</p>
                 </div>
-              `;
-            }).join('')}
-          </div>
-        `;
+
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <span class="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded">중식</span>
+                  <p class="text-xs text-slate-700 mt-2 leading-relaxed font-medium">${lunch}</p>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <span class="text-xs font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">석식</span>
+                  <p class="text-xs text-slate-700 mt-2 leading-relaxed font-medium">${dinner}</p>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
       } else {
         container.innerHTML = `
           <div class="bg-white border border-slate-200 rounded-2xl p-16 text-center shadow-sm">
-            <h3 class="text-base font-bold text-slate-800">등록된 급식 정보가 없습니다</h3>
-            <p class="text-xs text-slate-500 mt-2">${formatDateStr(currentDate)}의 급식 데이터가 존재하지 않습니다.</p>
+            <h3 class="text-base font-bold text-slate-800">해당 월의 등록된 급식 정보가 없습니다</h3>
           </div>
         `;
       }
     }
 
-    document.getElementById('prevBtn').addEventListener('click', () => {
-      currentDate.setDate(currentDate.getDate() - 1);
-      loadMealData();
+    document.getElementById('prevMonthBtn').addEventListener('click', () => {
+      currentYearMonth.setMonth(currentYearMonth.getMonth() - 1);
+      loadMonthlyData();
     });
 
-    document.getElementById('nextBtn').addEventListener('click', () => {
-      currentDate.setDate(currentDate.getDate() + 1);
-      loadMealData();
+    document.getElementById('nextMonthBtn').addEventListener('click', () => {
+      currentYearMonth.setMonth(currentYearMonth.getMonth() + 1);
+      loadMonthlyData();
     });
 
-    document.getElementById('todayBtn').addEventListener('click', () => {
-      currentDate = new Date();
-      loadMealData();
-    });
-
-    loadMealData();
+    loadMonthlyData();
   </script>
 </body>
 </html>
