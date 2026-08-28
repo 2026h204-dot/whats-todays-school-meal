@@ -18,9 +18,10 @@
     <script type="text/babel">
       const { useState, useEffect } = React;
 
+      // 중앙예닮학교 나이스 정보
       const SCHOOL_NAME = "중앙예닮학교";
-      const OFFICE_CODE = "J10"; 
-      const SCHOOL_CODE = "7531295";
+      const OFFICE_CODE = "J10"; // 경기도교육청
+      const SCHOOL_CODE = "7531295"; // 중앙예닮학교 고유 코드
       const API_KEY = "c18f1a26d702434190cb89c02059345c";
 
       function App() {
@@ -39,36 +40,27 @@
           const day = String(date.getDate()).padStart(2, '0');
           const yyyymmdd = `${year}${month}${day}`;
 
+          const neisUrl = `https://open.neis.go.kr/hub/mealServiceDietInfo?KEY=${API_KEY}&Type=json&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}&SD_SCHUL_CODE=${SCHOOL_CODE}&MLSV_YMD=${yyyymmdd}`;
+
           try {
-            // 1. 나이스 공식 API 직접 요청
-            const res = await fetch(
-              `https://open.neis.go.kr/hub/mealServiceDietInfo?KEY=${API_KEY}&Type=json&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}&SD_SCHUL_CODE=${SCHOOL_CODE}&MLSV_YMD=${yyyymmdd}`
-            );
-            const data = await res.json();
+            // CORS 우회 서버를 이용한 안전한 데이터 수신
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(neisUrl)}`;
+            const res = await fetch(proxyUrl);
+            const proxyData = await res.json();
+            const data = JSON.parse(proxyData.contents);
 
             if (data.mealServiceDietInfo && data.mealServiceDietInfo[1]?.row) {
               setMeals(data.mealServiceDietInfo[1].row);
             } else {
-              // 2. 만약 CORS 나 나이스 반환 오류 시 예비 공공 미러 API 호출
-              const backupRes = await fetch(
-                `https://meal.vbal.dev/api/meal?office=${OFFICE_CODE}&school=${SCHOOL_CODE}&date=${yyyymmdd}`
-              );
-              const backupData = await backupRes.json();
-              if (backupData && backupData.meals) {
-                setMeals(backupData.meals);
-              } else {
-                setMeals([]);
-              }
+              setMeals([]);
             }
           } catch (err) {
-            // 네트워크 우회 처리
+            // 우회 실패 시 직접 요청 시도
             try {
-              const backupRes = await fetch(
-                `https://meal.vbal.dev/api/meal?office=${OFFICE_CODE}&school=${SCHOOL_CODE}&date=${yyyymmdd}`
-              );
-              const backupData = await backupRes.json();
-              if (backupData && backupData.meals) {
-                setMeals(backupData.meals);
+              const resDirect = await fetch(neisUrl);
+              const dataDirect = await resDirect.json();
+              if (dataDirect.mealServiceDietInfo && dataDirect.mealServiceDietInfo[1]?.row) {
+                setMeals(dataDirect.mealServiceDietInfo[1].row);
               } else {
                 setMeals([]);
               }
@@ -149,10 +141,10 @@
                 </div>
               )}
 
-              {/* 급식 카드 영역 */}
+              {/* 급식 카드 */}
               {loading ? (
                 <div className="bg-white p-12 rounded-3xl shadow-sm text-center text-slate-400 text-sm font-medium">
-                  중앙예닮학교 급식 정보를 불러오는 중...
+                  급식 정보를 불러오는 중입니다...
                 </div>
               ) : meals.length > 0 ? (
                 <div className="space-y-4">
@@ -160,13 +152,13 @@
                     <div key={idx} className="bg-white p-6 rounded-3xl shadow-md border border-slate-100">
                       <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200">
                         <span className="bg-indigo-600 text-white font-bold text-xs px-3 py-1 rounded-full">
-                          {meal.MMEAL_SC_NM || meal.mealName}
+                          {meal.MMEAL_SC_NM}
                         </span>
-                        <span className="text-xs text-slate-400 font-semibold">{meal.CAL_INFO || meal.calorie}</span>
+                        <span className="text-xs text-slate-400 font-semibold">{meal.CAL_INFO}</span>
                       </div>
 
                       <div className="space-y-1">
-                        {cleanMealName(meal.DDISH_NM || meal.menu)}
+                        {cleanMealName(meal.DDISH_NM)}
                       </div>
                     </div>
                   ))}
