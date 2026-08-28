@@ -4,12 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>중앙예닮학교 오늘의 급식</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & React DOM CDN -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <!-- Babel Standalone -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   </head>
   <body class="bg-slate-950 text-slate-100 font-sans min-h-screen pb-16 antialiased">
@@ -23,21 +20,20 @@
       const SCHOOL_CODE = "7531295"; 
       const API_KEY = "c18f1a26d702434190cb89c02059345c";
 
-      // 식사 종류별 표준 시간 및 가이드 설명
       const MEAL_INFO = {
         "조식": {
           time: "07:30 ~ 08:20",
-          guide: "아침 기상 후 균형 잡힌 영양 공급을 위해 단백질과 두뇌 활성 탄수화물 위주로 구성된 식단입니다.",
+          guide: "기상 후 활력 충전을 위한 단백질과 영양 중심의 아침 식단입니다.",
           color: "border-emerald-500/40 bg-emerald-500/5 text-emerald-400"
         },
         "중식": {
           time: "12:10 ~ 13:20",
-          guide: "오후 학업 활동을 위한 고열량·고단백 중심의 균형 식단입니다. 제철 채소와 주요 요리가 포함됩니다.",
+          guide: "오후 학업 활동을 위한 고단백 중심의 균형 잡힌 점심 식단입니다.",
           color: "border-indigo-500/40 bg-indigo-500/5 text-indigo-400"
         },
         "석식": {
           time: "18:00 ~ 19:00",
-          guide: "일과 후 소화 부담을 줄이면서도 충분한 수면 전 영양을 보충할 수 있도록 설계된 식단입니다.",
+          guide: "하루 일과 마무리 및 자습 전 충분한 수면 영양 보충을 위한 식단입니다.",
           color: "border-purple-500/40 bg-purple-500/5 text-purple-400"
         }
       };
@@ -48,10 +44,10 @@
         const [loading, setLoading] = useState(true);
 
         useEffect(() => {
-          fetchRealtimeMealData(selectedDate);
+          fetchMealData(selectedDate);
         }, [selectedDate]);
 
-        const fetchRealtimeMealData = async (date) => {
+        const fetchMealData = async (date) => {
           setLoading(true);
           const year = date.getFullYear();
           const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -61,9 +57,9 @@
           const targetUrl = `https://open.neis.go.kr/hub/mealServiceDietInfo?KEY=${API_KEY}&Type=json&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}&SD_SCHUL_CODE=${SCHOOL_CODE}&MLSV_YMD=${yyyymmdd}`;
 
           try {
-            const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
-            const proxyData = await res.json();
-            const data = JSON.parse(proxyData.contents);
+            // CorsProxy 프록시 우회
+            const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
+            const data = await res.json();
 
             if (data.mealServiceDietInfo && data.mealServiceDietInfo[1]?.row) {
               setMeals(data.mealServiceDietInfo[1].row);
@@ -71,180 +67,10 @@
               setMeals([]);
             }
           } catch (err) {
+            // 실패 시 Allorigins 프록시 2차 시도
             try {
-              const directRes = await fetch(targetUrl);
-              const directData = await directRes.json();
-              if (directData.mealServiceDietInfo && directData.mealServiceDietInfo[1]?.row) {
-                setMeals(directData.mealServiceDietInfo[1].row);
-              } else {
-                setMeals([]);
-              }
-            } catch (e) {
-              setMeals([]);
-            }
-          } finally {
-            setLoading(false);
-          }
-        };
+              const res2 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
+              const proxyData = await res2.json();
+              const data2 = JSON.parse(proxyData.contents);
 
-        const changeDate = (days) => {
-          const newDate = new Date(selectedDate);
-          newDate.setDate(newDate.getDate() + days);
-          setSelectedDate(newDate);
-        };
-
-        const formatDateStr = (d) => {
-          const year = d.getFullYear();
-          const month = d.getMonth() + 1;
-          const date = d.getDate();
-          const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-          const day = dayNames[d.getDay()];
-          return `${year}년 ${month}월 ${date}일 (${day})`;
-        };
-
-        const isToday = selectedDate.toDateString() === new Date().toDateString();
-
-        // 메뉴 이름과 원산지/알레르기 정보 분리 분석
-        const parseMealDetails = (dishStr) => {
-          if (!dishStr) return [];
-          return dishStr.split('<br/>').map(item => {
-            const cleanName = item.replace(/\([0-9.]+\)/g, '').trim();
-            const allergyMatches = item.match(/\([0-9.]+\)/g);
-            const allergyCodes = allergyMatches ? allergyMatches.join(' ') : null;
-            return { name: cleanName, allergy: allergyCodes };
-          }).filter(item => item.name.length > 0);
-        };
-
-        return (
-          <div className="min-h-screen flex flex-col items-center justify-start pt-10 px-4 max-w-6xl mx-auto">
-            
-            {/* 상단 대시보드 타이틀 */}
-            <header className="w-full text-center mb-10 border-b border-slate-800 pb-8">
-              <span className="text-xs font-semibold tracking-widest text-indigo-400 uppercase">School Meal Information System</span>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-100 mt-2 tracking-tight">
-                {SCHOOL_NAME} 급식 대시보드
-              </h1>
-              <p className="text-sm text-slate-400 mt-2">나이스(NEIS) 공공 데이터 베이스 기반 실시간 표준 식단표</p>
-            </header>
-
-            {/* 날짜 선택 컨트롤러 */}
-            <div className="w-full max-w-xl flex justify-between items-center bg-slate-900 border border-slate-800 p-2 rounded-2xl shadow-2xl mb-8">
-              <button
-                onClick={() => changeDate(-1)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition"
-              >
-                ◀ 이전날
-              </button>
-              <div className="text-center">
-                <span className="text-base font-bold text-slate-200 block">
-                  {formatDateStr(selectedDate)}
-                </span>
-                {!isToday && (
-                  <button
-                    onClick={() => setSelectedDate(new Date())}
-                    className="text-[11px] text-indigo-400 hover:underline font-medium mt-0.5"
-                  >
-                    오늘 날짜로 이동
-                  </button>
-                )}
-              </div>
-              <button
-                onClick={() => changeDate(1)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition"
-              >
-                다음날 ▶
-              </button>
-            </div>
-
-            {/* 메인 콘텐츠 : 조식, 중식, 석식 한눈에 3열 격자(Grid) 배치 */}
-            <main className="w-full">
-              {loading ? (
-                <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-16 text-center shadow-xl">
-                  <div className="inline-block animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mb-4"></div>
-                  <p className="text-sm font-semibold text-slate-300">식단 정보를 분석하여 불러오는 중입니다...</p>
-                </div>
-              ) : meals.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-                  {meals.map((meal, idx) => {
-                    const mealType = meal.MMEAL_SC_NM;
-                    const info = MEAL_INFO[mealType] || {
-                      time: "배식 시간 안내",
-                      guide: "학교 표준 급식 지침에 따라 영양사가 구성한 식단입니다.",
-                      color: "border-slate-700 bg-slate-900 text-slate-300"
-                    };
-                    const parsedMenu = parseMealDetails(meal.DDISH_NM);
-
-                    return (
-                      <div 
-                        key={idx} 
-                        className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between shadow-xl hover:border-slate-700 transition duration-200"
-                      >
-                        <div>
-                          {/* 식사 종류 뱃지 & 열량 */}
-                          <div className="flex justify-between items-start mb-4 pb-4 border-b border-slate-800">
-                            <div>
-                              <span className={`inline-block px-3 py-1 rounded-lg border text-xs font-bold ${info.color}`}>
-                                {mealType}
-                              </span>
-                              <span className="block text-xs text-slate-500 mt-2 font-medium">
-                                배식시간: {info.time}
-                              </span>
-                            </div>
-                            <div className="text-right">
-                              <span className="text-xs text-slate-400 font-semibold block">총 열량</span>
-                              <span className="text-sm font-bold text-slate-200">{meal.CAL_INFO}</span>
-                            </div>
-                          </div>
-
-                          {/* 메뉴 상세 리스트 */}
-                          <div className="space-y-2 mb-6">
-                            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">식단 구성</span>
-                            {parsedMenu.map((item, i) => (
-                              <div key={i} className="flex justify-between items-center py-1.5 border-b border-slate-800/60 last:border-none">
-                                <span className="text-sm font-semibold text-slate-200">{item.name}</span>
-                                {item.allergy && (
-                                  <span className="text-[10px] text-slate-500 bg-slate-950 px-1.5 py-0.5 rounded font-mono" title="알레르기 정보 번호">
-                                    {item.allergy}
-                                  </span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* 식단 상세 설명 가이드 및 안내 */}
-                        <div className="mt-4 pt-4 border-t border-slate-800/80 bg-slate-950/50 p-3.5 rounded-xl border border-slate-800/40">
-                          <span className="text-[11px] font-bold text-indigo-400 block mb-1">식단 정보 & 안내</span>
-                          <p className="text-xs text-slate-400 leading-relaxed font-normal">
-                            {info.guide}
-                          </p>
-                          <div className="mt-2 text-[10px] text-slate-500 flex justify-between">
-                            <span>* 우측 숫자는 알레르기 유발 물질 정보</span>
-                          </div>
-                        </div>
-
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-16 text-center shadow-xl">
-                  <h3 className="text-base font-bold text-slate-300">등록된 급식 정보가 없습니다</h3>
-                  <p className="text-xs text-slate-500 mt-2">주말, 공휴일 또는 아직 학교에서 식단을 등록하지 않은 날짜입니다.</p>
-                </div>
-              )}
-            </main>
-
-            <footer className="mt-16 text-center text-xs text-slate-600">
-              {SCHOOL_NAME} 급식 정보 서비스 · Open API Provided by NEIS
-            </footer>
-
-          </div>
-        );
-      }
-
-      const root = ReactDOM.createRoot(document.getElementById('root'));
-      root.render(<App />);
-    </script>
-  </body>
-</html>
+              if (data2.mealServiceDietInfo && data2.mealServiceDietInfo[1]?.row) {
