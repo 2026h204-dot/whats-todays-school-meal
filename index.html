@@ -3,36 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>중앙예닮학교 오늘의 급식</title>
+  <title>중앙예닮학교 주간 급식 대시보드</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen pb-16 antialiased">
 
   <div class="max-w-6xl mx-auto pt-10 px-4">
     
+    <!-- 상단 헤더 -->
     <header class="text-center mb-8 border-b border-slate-200 pb-6">
       <span class="text-xs font-bold tracking-widest text-indigo-600 uppercase">Central Yedam School Meal System</span>
       <h1 class="text-3xl sm:text-4xl font-black text-slate-900 mt-2 tracking-tight">
         중앙예닮학교 급식 대시보드
       </h1>
-      <p class="text-xs text-slate-500 mt-2">실시간 학식 안내 서비스</p>
+      <p class="text-xs text-slate-500 mt-2">주간 실시간 학식 안내 서비스</p>
     </header>
 
-    <div class="max-w-md mx-auto flex justify-between items-center bg-white border border-slate-200 p-3 rounded-2xl shadow-sm mb-8">
-      <button id="prevBtn" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
-        ◀ 이전날
-      </button>
-      <div class="text-center">
-        <span id="dateText" class="text-base font-black text-slate-900 block"></span>
-        <button id="todayBtn" class="text-[11px] text-indigo-600 hover:underline font-bold mt-0.5 hidden">
-          오늘 날짜로 이동
+    <!-- 주차 이동 컨트롤러 -->
+    <div class="max-w-lg mx-auto bg-white border border-slate-200 p-4 rounded-2xl shadow-sm mb-6">
+      <div class="flex justify-between items-center mb-3">
+        <button id="prevWeekBtn" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+          ◀ 이전주
+        </button>
+        <div class="text-center">
+          <span id="weekTitle" class="text-base font-black text-slate-900 block"></span>
+          <span id="weekRange" class="text-xs font-semibold text-slate-500"></span>
+        </div>
+        <button id="nextWeekBtn" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+          다음주 ▶
         </button>
       </div>
-      <button id="nextBtn" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
-        다음날 ▶
-      </button>
+
+      <!-- 월~금 요일 선택 탭 -->
+      <div id="dayTabs" class="grid grid-cols-5 gap-1.5 pt-3 border-t border-slate-100 text-center">
+        <!-- JS로 월~금 탭 자동 생성 -->
+      </div>
     </div>
 
+    <!-- 메인 식단 카드 영역 -->
     <main id="mealContainer" class="w-full">
       <div class="bg-white border border-slate-200 rounded-2xl p-16 text-center shadow-sm">
         <p class="text-sm font-bold text-slate-500">급식 정보를 불러오는 중입니다...</p>
@@ -50,7 +58,31 @@
     const SCHOOL_CODE = "7531295";
     const API_KEY = "c18f1a26d702434190cb89c02059345c";
 
-    let currentDate = new Date();
+    // 현재 기준 주차의 월요일 날짜
+    let currentMonday = getMonday(new Date());
+    // 현재 선택된 요일 인덱스 (0: 월, 1: 화, 2: 수, 3: 목, 4: 금)
+    let selectedDayIdx = 0;
+
+    // 전달받은 날짜가 속한 주의 월요일 구하기
+    function getMonday(d) {
+      const date = new Date(d);
+      const day = date.getDay();
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1); // 일요일 처리 포함
+      return new Date(date.setDate(diff));
+    }
+
+    // 몇월 몇주차 계산
+    function getWeekInfo(mondayDate) {
+      const month = mondayDate.getMonth() + 1;
+      const firstDayOfMonth = new Date(mondayDate.getFullYear(), mondayDate.getMonth(), 1);
+      const firstMonday = getMonday(firstDayOfMonth);
+      
+      // 월의 첫 월요일과의 차이로 주차 계산
+      const diffDays = Math.round((mondayDate - firstMonday) / (1000 * 60 * 60 * 24));
+      const weekNum = Math.floor(diffDays / 7) + 1;
+
+      return { month, weekNum };
+    }
 
     const MEAL_CONFIG = {
       "조식": { time: "07:30 ~ 07:50", badge: "border-emerald-200 bg-emerald-50 text-emerald-700" },
@@ -58,7 +90,6 @@
       "석식": { time: "17:00 ~ 18:00", badge: "border-purple-200 bg-purple-50 text-purple-700" }
     };
 
-    // 내장 데이터베이스 (API 네트워크 차단 시 실행되는 백업 데이터)
     const BACKUP_DATABASE = {
       "20260824": [
         { MMEAL_SC_NM: "조식", CAL_INFO: "606.7 Kcal", DDISH_NM: "백미밥<br/>몽글계란국<br/>라구소스미트볼<br/>오이무침<br/>어묵볶음<br/>배추김치" },
@@ -87,14 +118,6 @@
       ]
     };
 
-    function formatDateStr(d) {
-      const year = d.getFullYear();
-      const month = d.getMonth() + 1;
-      const date = d.getDate();
-      const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-      return `${year}년 ${month}월 ${date}일 (${dayNames[d.getDay()]})`;
-    }
-
     function parseMenu(dishStr) {
       if (!dishStr) return [];
       return dishStr.split('<br/>').map(item => {
@@ -115,24 +138,57 @@
       return `오늘의 메인 식단: <strong>${text}</strong>`;
     }
 
-    async function loadMealData() {
+    function renderUI() {
+      // 1. 주차 및 날짜 범위 표기
+      const { month, weekNum } = getWeekInfo(currentMonday);
+      const fridayDate = new Date(currentMonday);
+      fridayDate.setDate(fridayDate.getDate() + 4);
+
+      document.getElementById('weekTitle').innerText = `${month}월 ${weekNum}주차`;
+      document.getElementById('weekRange').innerText = `(${currentMonday.getMonth() + 1}.${currentMonday.getDate()} ~ ${fridayDate.getMonth() + 1}.${fridayDate.getDate()})`;
+
+      // 2. 월~금 요일 탭 생성
+      const dayNames = ['월', '화', '수', '목', '금'];
+      const tabsContainer = document.getElementById('dayTabs');
+      tabsContainer.innerHTML = '';
+
+      for (let i = 0; i < 5; i++) {
+        const dayDate = new Date(currentMonday);
+        dayDate.setDate(dayDate.getDate() + i);
+
+        const isActive = i === selectedDayIdx;
+        const activeStyle = isActive 
+          ? 'bg-indigo-600 text-white font-black shadow-sm' 
+          : 'bg-slate-100 text-slate-600 font-bold hover:bg-slate-200';
+
+        const btn = document.createElement('button');
+        btn.className = `py-2 rounded-xl text-xs transition flex flex-col items-center justify-center ${activeStyle}`;
+        btn.innerHTML = `
+          <span>${dayNames[i]}</span>
+          <span class="text-[10px] opacity-80">${dayDate.getDate()}일</span>
+        `;
+        btn.addEventListener('click', () => {
+          selectedDayIdx = i;
+          renderUI();
+        });
+        tabsContainer.appendChild(btn);
+      }
+
+      // 3. 선택된 날짜의 식단 로드
+      const targetDate = new Date(currentMonday);
+      targetDate.setDate(targetDate.getDate() + selectedDayIdx);
+      loadMealDataForDate(targetDate);
+    }
+
+    async function loadMealDataForDate(targetDate) {
       const container = document.getElementById('mealContainer');
-      const dateText = document.getElementById('dateText');
-      const todayBtn = document.getElementById('todayBtn');
-
-      dateText.innerText = formatDateStr(currentDate);
-
-      const isToday = currentDate.toDateString() === new Date().toDateString();
-      todayBtn.classList.toggle('hidden', isToday);
-
-      const year = currentDate.getFullYear();
-      const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-      const day = String(currentDate.getDate()).padStart(2, '0');
+      const year = targetDate.getFullYear();
+      const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+      const day = String(targetDate.getDate()).padStart(2, '0');
       const yyyymmdd = `${year}${month}${day}`;
 
       let meals = [];
 
-      // API 호출 시도 및 실패 시 내장 데이터베이스 사용
       try {
         const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?KEY=${API_KEY}&Type=json&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}&SD_SCHUL_CODE=${SCHOOL_CODE}&MLSV_YMD=${yyyymmdd}`;
         const res = await fetch(url);
@@ -197,29 +253,35 @@
         container.innerHTML = `
           <div class="bg-white border border-slate-200 rounded-2xl p-16 text-center shadow-sm">
             <h3 class="text-base font-bold text-slate-800">등록된 급식 정보가 없습니다</h3>
-            <p class="text-xs text-slate-500 mt-2">${formatDateStr(currentDate)}은 급식 데이터가 존재하지 않는 날짜입니다.</p>
+            <p class="text-xs text-slate-500 mt-2">${targetDate.getMonth() + 1}월 ${targetDate.getDate()}일은 급식 데이터가 존재하지 않는 날짜입니다.</p>
           </div>
         `;
       }
     }
 
-    document.getElementById('prevBtn').addEventListener('click', () => {
-      currentDate.setDate(currentDate.getDate() - 1);
-      loadMealData();
+    // 이전주 이동
+    document.getElementById('prevWeekBtn').addEventListener('click', () => {
+      currentMonday.setDate(currentMonday.getDate() - 7);
+      selectedDayIdx = 0; // 첫날(월요일)로 초기화
+      renderUI();
     });
 
-    document.getElementById('nextBtn').addEventListener('click', () => {
-      currentDate.setDate(currentDate.getDate() + 1);
-      loadMealData();
+    // 다음주 이동
+    document.getElementById('nextWeekBtn').addEventListener('click', () => {
+      currentMonday.setDate(currentMonday.getDate() + 7);
+      selectedDayIdx = 0; // 첫날(월요일)로 초기화
+      renderUI();
     });
 
-    document.getElementById('todayBtn').addEventListener('click', () => {
-      currentDate = new Date();
-      loadMealData();
-    });
+    // 초기 오늘 요일에 맞춰 selectedDayIdx 지정
+    const todayNum = new Date().getDay();
+    if (todayNum >= 1 && todayNum <= 5) {
+      selectedDayIdx = todayNum - 1; // 오늘이 월~금이면 해당 요일 선택
+    } else {
+      selectedDayIdx = 0; // 주말이면 월요일 선택
+    }
 
-    // 실행
-    loadMealData();
+    renderUI();
   </script>
 </body>
 </html>
