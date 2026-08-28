@@ -1,76 +1,69 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>중앙예닮학교 오늘의 급식</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  </head>
-  <body class="bg-slate-950 text-slate-100 font-sans min-h-screen pb-16 antialiased">
-    <div id="root"></div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>중앙예닮학교 오늘의 급식</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen pb-16 antialiased">
 
-    <script type="text/babel">
-      const { useState, useEffect } = React;
+  <div class="max-w-6xl mx-auto pt-10 px-4">
+    
+    <header class="text-center mb-8 border-b border-slate-800 pb-6">
+      <span class="text-xs font-semibold tracking-widest text-indigo-400 uppercase">Central Yedam School Meal System</span>
+      <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-100 mt-2 tracking-tight">
+        중앙예닮학교 급식 대시보드
+      </h1>
+      <p class="text-xs text-slate-400 mt-2">나이스(NEIS) 공공 데이터 연동 실시간 급식 안내</p>
+    </header>
 
-      const SCHOOL_NAME = "중앙예닮학교";
-      const OFFICE_CODE = "J10"; 
-      const SCHOOL_CODE = "7531295"; 
-      const API_KEY = "c18f1a26d702434190cb89c02059345c";
+    <div class="max-w-md mx-auto flex justify-between items-center bg-slate-900 border border-slate-800 p-2 rounded-2xl shadow-xl mb-8">
+      <button id="prevBtn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition">
+        ◀ 이전날
+      </button>
+      <div class="text-center">
+        <span id="dateText" class="text-sm font-bold text-slate-200 block"></span>
+        <button id="todayBtn" class="text-[11px] text-indigo-400 hover:underline font-medium mt-0.5 hidden">
+          오늘 날짜로 이동
+        </button>
+      </div>
+      <button id="nextBtn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition">
+        다음날 ▶
+      </button>
+    </div>
 
-      const MEAL_INFO = {
-        "조식": {
-          time: "07:30 ~ 08:20",
-          guide: "기상 후 활력 충전을 위한 단백질과 영양 중심의 아침 식단입니다.",
-          color: "border-emerald-500/40 bg-emerald-500/5 text-emerald-400"
-        },
-        "중식": {
-          time: "12:10 ~ 13:20",
-          guide: "오후 학업 활동을 위한 고단백 중심의 균형 잡힌 점심 식단입니다.",
-          color: "border-indigo-500/40 bg-indigo-500/5 text-indigo-400"
-        },
-        "석식": {
-          time: "18:00 ~ 19:00",
-          guide: "하루 일과 마무리 및 자습 전 충분한 수면 영양 보충을 위한 식단입니다.",
-          color: "border-purple-500/40 bg-purple-500/5 text-purple-400"
-        }
-      };
+    <main id="mealContainer" class="w-full">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-16 text-center shadow-xl">
+        <p class="text-sm font-semibold text-slate-300">급식 정보를 불러오는 중입니다...</p>
+      </div>
+    </main>
 
-      function App() {
-        const [selectedDate, setSelectedDate] = useState(new Date());
-        const [meals, setMeals] = useState([]);
-        const [loading, setLoading] = useState(true);
+    <footer class="mt-16 text-center text-xs text-slate-600">
+      중앙예닮학교 급식 정보 서비스
+    </footer>
 
-        useEffect(() => {
-          fetchMealData(selectedDate);
-        }, [selectedDate]);
+  </div>
 
-        const fetchMealData = async (date) => {
-          setLoading(true);
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          const yyyymmdd = `${year}${month}${day}`;
+  <script>
+    const OFFICE_CODE = "J10";
+    const SCHOOL_CODE = "7531295";
+    const API_KEY = "c18f1a26d702434190cb89c02059345c";
 
-          const targetUrl = `https://open.neis.go.kr/hub/mealServiceDietInfo?KEY=${API_KEY}&Type=json&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}&SD_SCHUL_CODE=${SCHOOL_CODE}&MLSV_YMD=${yyyymmdd}`;
+    let currentDate = new Date();
 
-          try {
-            // CorsProxy 프록시 우회
-            const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
-            const data = await res.json();
-
-            if (data.mealServiceDietInfo && data.mealServiceDietInfo[1]?.row) {
-              setMeals(data.mealServiceDietInfo[1].row);
-            } else {
-              setMeals([]);
-            }
-          } catch (err) {
-            // 실패 시 Allorigins 프록시 2차 시도
-            try {
-              const res2 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
-              const proxyData = await res2.json();
-              const data2 = JSON.parse(proxyData.contents);
-
-              if (data2.mealServiceDietInfo && data2.mealServiceDietInfo[1]?.row) {
+    const MEAL_INFO = {
+      "조식": {
+        time: "07:30 ~ 08:20",
+        guide: "기상 후 활력 충전을 위한 단백질과 영양 중심의 아침 식단입니다.",
+        badge: "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+      },
+      "중식": {
+        time: "12:10 ~ 13:20",
+        guide: "오후 학업 활동을 위한 고단백 중심의 균형 잡힌 점심 식단입니다.",
+        badge: "border-indigo-500/40 bg-indigo-500/10 text-indigo-400"
+      },
+      "석식": {
+        time: "18:00 ~ 19:00",
+        guide: "하루 일과 마무리 및 자습 전 충분한 영양 보충을 위한 식단입니다.",
+        badge: "border-purple-
