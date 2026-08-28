@@ -12,7 +12,7 @@
     <!-- Babel Standalone -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   </head>
-  <body class="bg-slate-100 text-slate-800 font-sans pb-16 antialiased">
+  <body class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-slate-100 font-sans min-h-screen pb-16 antialiased">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -20,33 +20,49 @@
 
       const SCHOOL_NAME = "중앙예닮학교";
 
-      // 최신 주간 식단 데이터 세트
+      // 주간 데이터베이스 (2026년 8월 기준)
       const MEAL_DATABASE = {
         "2026-08-24": [
-          { type: "조식", cal: "606.7 Kcal", menu: ["백미밥", "몽글계란국", "라구소스미트볼", "오이무침", "어묵볶음", "배추김치"] },
-          { type: "중식", cal: "937.6 Kcal", menu: ["혼합잡곡밥", "미역냉국", "브로콜리땅콩소스", "김치제육*온두부", "깍두기", "앙꼬절편"] },
-          { type: "석식", cal: "958.8 Kcal", menu: ["추가밥", "매운크림짬뽕", "꿀감자치즈롤까스", "배추김치", "오복지무침", "생과일"] }
+          { type: "조식", time: "07:30 ~ 08:20", cal: "606.7 Kcal", menu: ["백미밥", "몽글계란국", "라구소스미트볼", "오이무침", "어묵볶음", "배추김치"] },
+          { type: "중식", time: "12:10 ~ 13:20", cal: "937.6 Kcal", menu: ["혼합잡곡밥", "미역냉국", "브로콜리땅콩소스", "김치제육*온두부", "깍두기", "앙꼬절편"] },
+          { type: "석식", time: "18:00 ~ 19:00", cal: "958.8 Kcal", menu: ["추가밥", "매운크림짬뽕", "꿀감자치즈롤까스", "배추김치", "오복지무침", "생과일"] }
         ],
         "2026-08-25": [
-          { type: "조식", cal: "884.8 Kcal", menu: ["야채볶음밥", "베이글*크림치즈", "크림스프", "볶음김치", "고감콘*소스", "사랑해사과c주스"] },
-          { type: "중식", cal: "720.6 Kcal", menu: ["현미밥", "배추국", "훈제오리야채볶음", "건파래자반", "쌈무*소스", "깍두기"] },
-          { type: "석식", cal: "801.0 Kcal", menu: ["혼합잡곡밥", "애호박찌개", "무말랭이무침", "치즈찜닭", "나초샐러드", "배추김치"] }
+          { type: "조식", time: "07:30 ~ 08:20", cal: "884.8 Kcal", menu: ["야채볶음밥", "베이글*크림치즈", "크림스프", "볶음김치", "고감콘*소스", "사랑해사과c주스"] },
+          { type: "중식", time: "12:10 ~ 13:20", cal: "720.6 Kcal", menu: ["현미밥", "배추국", "훈제오리야채볶음", "건파래자반", "쌈무*소스", "깍두기"] },
+          { type: "석식", time: "18:00 ~ 19:00", cal: "801.0 Kcal", menu: ["혼합잡곡밥", "애호박찌개", "무말랭이무침", "치즈찜닭", "나초샐러드", "배추김치"] }
         ],
         "2026-08-26": [
-          { type: "조식", cal: "822.6 Kcal", menu: ["백미밥", "김치찌개", "오이무침", "하트미니카츠", "삼치엿장조림", "배추김치"] },
-          { type: "중식", cal: "740.5 Kcal", menu: ["산채비빔밥", "아욱된장국", "참나물오리엔탈무침", "셀프치킨또띠아", "파인애플", "배추김치"] },
-          { type: "석식", cal: "799.8 Kcal", menu: ["귀리밥", "콩나물국", "매운돼지갈비찜", "미역줄기볶음", "오징어볼", "배추김치"] }
+          { type: "조식", time: "07:30 ~ 08:20", cal: "822.6 Kcal", menu: ["백미밥", "김치찌개", "오이무침", "하트미니카츠", "삼치엿장조림", "배추김치"] },
+          { type: "중식", time: "12:10 ~ 13:20", cal: "740.5 Kcal", menu: ["산채비빔밥", "아욱된장국", "참나물오리엔탈무침", "셀프치킨또띠아", "파인애플", "배추김치"] },
+          { type: "석식", time: "18:00 ~ 19:00", cal: "799.8 Kcal", menu: ["귀리밥", "콩나물국", "매운돼지갈비찜", "미역줄기볶음", "오징어볼", "배추김치"] }
         ],
         "2026-08-27": [
-          { type: "조식", cal: "647.9 Kcal", menu: ["미니밥", "핫케이크*시럽", "베이컨구이", "브로콜리갈릭오븐구이", "에너지바", "배추김치"] },
-          { type: "중식", cal: "595.2 Kcal", menu: ["혼합잡곡밥", "소고기샤브샤브*2가지소스", "계란찜", "다시마무채무침", "대구까스*치폴레소스", "배추김치"] },
-          { type: "석식", cal: "670.9 Kcal", menu: ["스팸밥버거", "미소국", "매콤꼬치어묵", "블루베리샐러드", "짜요짜요", "깍두기"] }
+          { type: "조식", time: "07:30 ~ 08:20", cal: "647.9 Kcal", menu: ["미니밥", "핫케이크*시럽", "베이컨구이", "브로콜리갈릭오븐구이", "에너지바", "배추김치"] },
+          { type: "중식", time: "12:10 ~ 13:20", cal: "595.2 Kcal", menu: ["혼합잡곡밥", "소고기샤브샤브*2가지소스", "계란찜", "다시마무채무침", "대구까스*치폴레소스", "배추김치"] },
+          { type: "석식", time: "18:00 ~ 19:00", cal: "670.9 Kcal", menu: ["스팸밥버거", "미소국", "매콤꼬치어묵", "블루베리샐러드", "짜요짜요", "깍두기"] }
         ],
         "2026-08-28": [
-          { type: "조식", cal: "671.5 Kcal", menu: ["백미밥", "사골떡국", "닭살소금구이", "연두부냉채", "생과일", "배추김치"] },
-          { type: "중식", cal: "745.2 Kcal", menu: ["투움바파스타", "오지치즈후라이", "목살스테이크", "야채피클", "청포도에이드", "미니부시맨빵*초코잼"] },
-          { type: "석식", cal: "792.0 Kcal", menu: ["백미밥", "등뼈감자탕&수제비", "오이고추무침", "멘치까스", "해물파전", "석박지"] }
+          { type: "조식", time: "07:30 ~ 08:20", cal: "671.5 Kcal", menu: ["백미밥", "사골떡국", "닭살소금구이", "연두부냉채", "생과일", "배추김치"] },
+          { type: "중식", time: "12:10 ~ 13:20", cal: "745.2 Kcal", menu: ["투움바파스타", "오지치즈후라이", "목살스테이크", "야채피클", "청포도에이드", "미니부시맨빵*초코잼"] },
+          { type: "석식", time: "18:00 ~ 19:00", cal: "792.0 Kcal", menu: ["백미밥", "등뼈감자탕&수제비", "오이고추무침", "멘치까스", "해물파전", "석박지"] }
         ]
+      };
+
+      // 🔍 메뉴 키워드를 파악해 음식 아이콘을 그려주는 함수
+      const getFoodIcon = (name) => {
+        if (name.includes("밥") || name.includes("리조또")) return "🍚";
+        if (name.includes("국") || name.includes("탕") || name.includes("찌개") || name.includes("스프")) return "🍲";
+        if (name.includes("고기") || name.includes("갈비") || name.includes("제육") || name.includes("스테이크") || name.includes("불고기") || name.includes("오리")) return "🥩";
+        if (name.includes("치킨") || name.includes("닭") || name.includes("까스") || name.includes("카츠") || name.includes("튀김") || name.includes("볼")) return "🍗";
+        if (name.includes("파스타") || name.includes("면") || name.includes("짬뽕") || name.includes("스파게티") || name.includes("우동")) return "🍝";
+        if (name.includes("피자") || name.includes("또띠아") || name.includes("버거")) return "🍕";
+        if (name.includes("빵") || name.includes("베이글") || name.includes("케이크") || name.includes("떡")) return "🥐";
+        if (name.includes("샐러드") || name.includes("무침") || name.includes("나물") || name.includes("채")) return "🥗";
+        if (name.includes("김치") || name.includes("깍두기") || name.includes("석박지")) return "🥢";
+        if (name.includes("주스") || name.includes("에이드") || name.includes("우유") || name.includes("차")) return "🧃";
+        if (name.includes("과일") || name.includes("파인애플") || name.includes("사과")) return "🍎";
+        return "🍱";
       };
 
       function App() {
@@ -84,77 +100,100 @@
         const isToday = selectedDate.toDateString() === new Date().toDateString();
 
         return (
-          <div className="min-h-screen flex flex-col items-center justify-start pt-8 px-4">
+          <div className="min-h-screen flex flex-col items-center justify-start pt-10 px-4">
             <div className="w-full max-w-md">
               
-              {/* 학교 타이틀 */}
-              <div className="text-center mb-6">
-                <span className="text-4xl mb-2 block">🍱</span>
-                <h1 className="text-2xl font-black text-indigo-900 tracking-tight">{SCHOOL_NAME}</h1>
-                <p className="text-xs text-slate-500 font-semibold mt-1">오늘의 급식 메뉴</p>
+              {/* 메인 헤더 */}
+              <div className="text-center mb-8">
+                <div className="inline-block p-3 bg-indigo-500/20 backdrop-blur-md rounded-2xl mb-3 border border-indigo-500/30">
+                  <span className="text-4xl">✨</span>
+                </div>
+                <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 via-sky-300 to-indigo-100 tracking-tight">
+                  {SCHOOL_NAME}
+                </h1>
+                <p className="text-xs text-indigo-300/70 font-medium mt-1 tracking-wider uppercase">Today's Gourmet Menu</p>
               </div>
 
-              {/* 날짜 선택바 */}
-              <div className="flex justify-between items-center bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 mb-4">
+              {/* 날짜 네비게이터 */}
+              <div className="flex justify-between items-center bg-slate-800/80 backdrop-blur-md p-2 rounded-2xl shadow-xl border border-slate-700/60 mb-6">
                 <button
                   onClick={() => changeDate(-1)}
-                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
+                  className="px-4 py-2.5 bg-slate-700/60 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition duration-200 active:scale-95"
                 >
                   ◀ 이전날
                 </button>
-                <span className="text-sm font-black text-indigo-600">
+                <span className="text-sm font-black text-indigo-300">
                   {formatDateStr(selectedDate)}
                 </span>
                 <button
                   onClick={() => changeDate(1)}
-                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
+                  className="px-4 py-2.5 bg-slate-700/60 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition duration-200 active:scale-95"
                 >
                   다음날 ▶
                 </button>
               </div>
 
               {!isToday && (
-                <div className="text-center mb-4">
+                <div className="text-center mb-6">
                   <button
                     onClick={() => setSelectedDate(new Date())}
-                    className="text-xs text-indigo-600 hover:underline font-bold"
+                    className="text-xs bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 px-4 py-1.5 rounded-full font-bold transition"
                   >
                     오늘 날짜로 돌아가기
                   </button>
                 </div>
               )}
 
-              {/* 급식 목록 카드 */}
+              {/* 급식 식단 카드 목록 */}
               {meals.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {meals.map((meal, idx) => (
-                    <div key={idx} className="bg-white p-6 rounded-3xl shadow-md border border-slate-100">
-                      <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200">
-                        <span className="bg-indigo-600 text-white font-bold text-xs px-3 py-1 rounded-full">
-                          {meal.type}
+                    <div key={idx} className="bg-slate-800/60 backdrop-blur-md rounded-3xl p-6 border border-slate-700/50 shadow-2xl relative overflow-hidden group hover:border-indigo-500/50 transition duration-300">
+                      
+                      {/* 헤더 부분 */}
+                      <div className="flex justify-between items-center mb-5 pb-4 border-b border-slate-700/60">
+                        <div className="flex items-center gap-2.5">
+                          <span className="bg-gradient-to-r from-indigo-500 to-sky-500 text-white font-black text-xs px-3.5 py-1.5 rounded-xl shadow-lg shadow-indigo-500/20">
+                            {meal.type}
+                          </span>
+                          <span className="text-xs font-bold text-slate-400">{meal.time}</span>
+                        </div>
+                        <span className="text-xs font-extrabold text-indigo-300 bg-indigo-950/60 px-3 py-1 rounded-lg border border-indigo-800/40">
+                          🔥 {meal.cal}
                         </span>
-                        <span className="text-xs text-slate-400 font-semibold">{meal.cal}</span>
                       </div>
 
-                      <div className="space-y-1">
+                      {/* 음식 아이콘 파싱 목록 */}
+                      <div className="grid grid-cols-1 gap-2.5">
                         {meal.menu.map((item, i) => (
-                          <div key={i} className="py-2 border-b border-slate-100 last:border-none flex justify-between items-center">
-                            <span className="text-base font-bold text-slate-800">
+                          <div 
+                            key={i} 
+                            className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/40 hover:bg-slate-900/70 border border-slate-700/30 transition duration-200"
+                          >
+                            <span className="text-sm font-bold text-slate-200 tracking-wide">
                               {item}
+                            </span>
+                            <span className="text-xl bg-slate-800/80 p-1.5 rounded-xl border border-slate-700/50 shadow-inner">
+                              {getFoodIcon(item)}
                             </span>
                           </div>
                         ))}
                       </div>
+
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="bg-white p-10 rounded-3xl shadow-sm border border-slate-200 text-center">
-                  <p className="text-3xl mb-2">🍃</p>
-                  <p className="text-sm font-bold text-slate-700">등록된 급식이 없습니다.</p>
-                  <p className="text-xs text-slate-400 mt-1">주말, 공휴일 또는 방학 기간일 수 있습니다.</p>
+                <div className="bg-slate-800/40 backdrop-blur-md p-12 rounded-3xl border border-slate-700/50 text-center shadow-2xl">
+                  <p className="text-5xl mb-3">🍃</p>
+                  <p className="text-base font-black text-slate-300">식단 정보가 존재하지 않습니다</p>
+                  <p className="text-xs text-slate-500 mt-1 font-medium">주말, 공휴일 또는 방학 기간일 수 있습니다.</p>
                 </div>
               )}
+
+              <footer className="text-center mt-12 text-slate-500 text-xs font-semibold">
+                © {SCHOOL_NAME} Student Meal Service
+              </footer>
 
             </div>
           </div>
