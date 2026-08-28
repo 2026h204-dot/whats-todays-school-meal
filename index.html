@@ -18,59 +18,53 @@
     <script type="text/babel">
       const { useState, useEffect } = React;
 
-      // 중앙예닮학교 나이스 정보
       const SCHOOL_NAME = "중앙예닮학교";
-      const OFFICE_CODE = "J10"; // 경기도교육청
-      const SCHOOL_CODE = "7531295"; // 중앙예닮학교 고유 코드
-      const API_KEY = "c18f1a26d702434190cb89c02059345c";
+
+      // 최신 주간 식단 데이터 세트
+      const MEAL_DATABASE = {
+        "2026-08-24": [
+          { type: "조식", cal: "606.7 Kcal", menu: ["백미밥", "몽글계란국", "라구소스미트볼", "오이무침", "어묵볶음", "배추김치"] },
+          { type: "중식", cal: "937.6 Kcal", menu: ["혼합잡곡밥", "미역냉국", "브로콜리땅콩소스", "김치제육*온두부", "깍두기", "앙꼬절편"] },
+          { type: "석식", cal: "958.8 Kcal", menu: ["추가밥", "매운크림짬뽕", "꿀감자치즈롤까스", "배추김치", "오복지무침", "생과일"] }
+        ],
+        "2026-08-25": [
+          { type: "조식", cal: "884.8 Kcal", menu: ["야채볶음밥", "베이글*크림치즈", "크림스프", "볶음김치", "고감콘*소스", "사랑해사과c주스"] },
+          { type: "중식", cal: "720.6 Kcal", menu: ["현미밥", "배추국", "훈제오리야채볶음", "건파래자반", "쌈무*소스", "깍두기"] },
+          { type: "석식", cal: "801.0 Kcal", menu: ["혼합잡곡밥", "애호박찌개", "무말랭이무침", "치즈찜닭", "나초샐러드", "배추김치"] }
+        ],
+        "2026-08-26": [
+          { type: "조식", cal: "822.6 Kcal", menu: ["백미밥", "김치찌개", "오이무침", "하트미니카츠", "삼치엿장조림", "배추김치"] },
+          { type: "중식", cal: "740.5 Kcal", menu: ["산채비빔밥", "아욱된장국", "참나물오리엔탈무침", "셀프치킨또띠아", "파인애플", "배추김치"] },
+          { type: "석식", cal: "799.8 Kcal", menu: ["귀리밥", "콩나물국", "매운돼지갈비찜", "미역줄기볶음", "오징어볼", "배추김치"] }
+        ],
+        "2026-08-27": [
+          { type: "조식", cal: "647.9 Kcal", menu: ["미니밥", "핫케이크*시럽", "베이컨구이", "브로콜리갈릭오븐구이", "에너지바", "배추김치"] },
+          { type: "중식", cal: "595.2 Kcal", menu: ["혼합잡곡밥", "소고기샤브샤브*2가지소스", "계란찜", "다시마무채무침", "대구까스*치폴레소스", "배추김치"] },
+          { type: "석식", cal: "670.9 Kcal", menu: ["스팸밥버거", "미소국", "매콤꼬치어묵", "블루베리샐러드", "짜요짜요", "깍두기"] }
+        ],
+        "2026-08-28": [
+          { type: "조식", cal: "671.5 Kcal", menu: ["백미밥", "사골떡국", "닭살소금구이", "연두부냉채", "생과일", "배추김치"] },
+          { type: "중식", cal: "745.2 Kcal", menu: ["투움바파스타", "오지치즈후라이", "목살스테이크", "야채피클", "청포도에이드", "미니부시맨빵*초코잼"] },
+          { type: "석식", cal: "792.0 Kcal", menu: ["백미밥", "등뼈감자탕&수제비", "오이고추무침", "멘치까스", "해물파전", "석박지"] }
+        ]
+      };
 
       function App() {
-        const [meals, setMeals] = useState([]);
-        const [loading, setLoading] = useState(true);
         const [selectedDate, setSelectedDate] = useState(new Date());
+        const [meals, setMeals] = useState([]);
 
         useEffect(() => {
-          fetchMealData(selectedDate);
-        }, [selectedDate]);
+          const year = selectedDate.getFullYear();
+          const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+          const day = String(selectedDate.getDate()).padStart(2, '0');
+          const dateKey = `${year}-${month}-${day}`;
 
-        const fetchMealData = async (date) => {
-          setLoading(true);
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          const yyyymmdd = `${year}${month}${day}`;
-
-          const neisUrl = `https://open.neis.go.kr/hub/mealServiceDietInfo?KEY=${API_KEY}&Type=json&ATPT_OFCDC_SC_CODE=${OFFICE_CODE}&SD_SCHUL_CODE=${SCHOOL_CODE}&MLSV_YMD=${yyyymmdd}`;
-
-          try {
-            // CORS 우회 서버를 이용한 안전한 데이터 수신
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(neisUrl)}`;
-            const res = await fetch(proxyUrl);
-            const proxyData = await res.json();
-            const data = JSON.parse(proxyData.contents);
-
-            if (data.mealServiceDietInfo && data.mealServiceDietInfo[1]?.row) {
-              setMeals(data.mealServiceDietInfo[1].row);
-            } else {
-              setMeals([]);
-            }
-          } catch (err) {
-            // 우회 실패 시 직접 요청 시도
-            try {
-              const resDirect = await fetch(neisUrl);
-              const dataDirect = await resDirect.json();
-              if (dataDirect.mealServiceDietInfo && dataDirect.mealServiceDietInfo[1]?.row) {
-                setMeals(dataDirect.mealServiceDietInfo[1].row);
-              } else {
-                setMeals([]);
-              }
-            } catch (e) {
-              setMeals([]);
-            }
-          } finally {
-            setLoading(false);
+          if (MEAL_DATABASE[dateKey]) {
+            setMeals(MEAL_DATABASE[dateKey]);
+          } else {
+            setMeals([]);
           }
-        };
+        }, [selectedDate]);
 
         const changeDate = (days) => {
           const newDate = new Date(selectedDate);
@@ -87,24 +81,13 @@
           return `${year}년 ${month}월 ${date}일 (${day})`;
         };
 
-        const cleanMealName = (mealStr) => {
-          if (!mealStr) return null;
-          return mealStr.split('<br/>').map((item, i) => (
-            <div key={i} className="py-2 border-b border-slate-100 last:border-none flex justify-between items-center">
-              <span className="text-base font-bold text-slate-800">
-                {item.replace(/\([0-9.]+\)/g, '').trim()}
-              </span>
-            </div>
-          ));
-        };
-
         const isToday = selectedDate.toDateString() === new Date().toDateString();
 
         return (
           <div className="min-h-screen flex flex-col items-center justify-start pt-8 px-4">
             <div className="w-full max-w-md">
               
-              {/* 타이틀 */}
+              {/* 학교 타이틀 */}
               <div className="text-center mb-6">
                 <span className="text-4xl mb-2 block">🍱</span>
                 <h1 className="text-2xl font-black text-indigo-900 tracking-tight">{SCHOOL_NAME}</h1>
@@ -141,24 +124,26 @@
                 </div>
               )}
 
-              {/* 급식 카드 */}
-              {loading ? (
-                <div className="bg-white p-12 rounded-3xl shadow-sm text-center text-slate-400 text-sm font-medium">
-                  급식 정보를 불러오는 중입니다...
-                </div>
-              ) : meals.length > 0 ? (
+              {/* 급식 목록 카드 */}
+              {meals.length > 0 ? (
                 <div className="space-y-4">
                   {meals.map((meal, idx) => (
                     <div key={idx} className="bg-white p-6 rounded-3xl shadow-md border border-slate-100">
                       <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200">
                         <span className="bg-indigo-600 text-white font-bold text-xs px-3 py-1 rounded-full">
-                          {meal.MMEAL_SC_NM}
+                          {meal.type}
                         </span>
-                        <span className="text-xs text-slate-400 font-semibold">{meal.CAL_INFO}</span>
+                        <span className="text-xs text-slate-400 font-semibold">{meal.cal}</span>
                       </div>
 
                       <div className="space-y-1">
-                        {cleanMealName(meal.DDISH_NM)}
+                        {meal.menu.map((item, i) => (
+                          <div key={i} className="py-2 border-b border-slate-100 last:border-none flex justify-between items-center">
+                            <span className="text-base font-bold text-slate-800">
+                              {item}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
