@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>오늘의 급식표</title>
+  <title>중앙예닮학교 오늘의 급식표</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
@@ -13,8 +13,9 @@
     <!-- 헤더 영역 -->
     <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
       <div>
-        <h1 class="text-xl font-black text-slate-900">🍱 오늘의 급식표</h1>
-        <p id="currentDate" class="text-xs font-bold text-indigo-600 mt-1">날짜 불러오는 중...</p>
+        <span class="text-[11px] font-black text-indigo-500 uppercase tracking-wider">Yongin Sinbong High School</span>
+        <h1 class="text-xl font-black text-slate-900 mt-0.5">🍱 오늘의 급식표</h1>
+        <p id="currentDate" class="text-xs font-bold text-slate-500 mt-1">날짜 불러오는 중...</p>
       </div>
       <button onclick="fetchMealData()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 p-2.5 rounded-2xl transition" title="새로고침">
         🔄
@@ -22,7 +23,7 @@
     </div>
 
     <!-- 급식 목록 영역 -->
-    <div id="mealContainer" class="space-y-3">
+    <div id="mealContainer" class="space-y-2.5">
       <div class="text-center py-8 text-slate-400 font-bold text-sm">
         급식 정보를 가져오는 중입니다...
       </div>
@@ -30,50 +31,51 @@
 
     <!-- 하단 정보 -->
     <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-bold">
-      <span>나이스 교육청 API 연동</span>
-      <span id="lastUpdated">실시간 동기화 완료</span>
+      <span>나이스 API 실시간 연동</span>
+      <span id="lastUpdated">동기화 대기 중</span>
     </div>
 
   </div>
 
   <script>
-    // ⚙️ 학교 정보 설정 (사용하시는 학교의 설정을 넣으세요)
+    // ⚙️ 용인신봉고등학교 설정
     const SCHOOL_CONFIG = {
-      ATPT_OFCDC_SC_CODE: "J10", // 교육청 코드 (예: 경기 J10, 서울 B10)
-      SD_SCHUL_CODE: "7530851"   // 행정표준기관코드 (학교 고유코드)
+      ATPT_OFCDC_SC_CODE: "J10", // 경기도교육청
+      SD_SCHUL_CODE: "7531295"   // 용인신봉고등학교 고유코드
     };
 
-    // 오늘 날짜 구하기 (YYYYMMDD 형식)
+    // 오늘 날짜 구하기 (YYYYMMDD)
     function getTodayString() {
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const day = String(now.getDate()).padStart(2, '0');
+      
+      const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][now.getDay()];
+
       return {
-        formatted: `${year}년 ${month}월 ${day}일`,
+        formatted: `${year}년 ${month}월 ${day}일 (${dayOfWeek})`,
         apiDate: `${year}${month}${day}`
       };
     }
 
-    // 급식 데이터 실시간 조회
+    // 급식 데이터 불러오기
     async function fetchMealData() {
       const { formatted, apiDate } = getTodayString();
       
-      // 날짜 표시 갱신
       document.getElementById('currentDate').innerText = formatted;
       const container = document.getElementById('mealContainer');
       
       try {
-        // 나이스 API 요청 (오늘 날짜 dynamic 파라미터 적용)
         const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&pIndex=1&pSize=100&ATPT_OFCDC_SC_CODE=${SCHOOL_CONFIG.ATPT_OFCDC_SC_CODE}&SD_SCHUL_CODE=${SCHOOL_CONFIG.SD_SCHUL_CODE}&MLSV_YMD=${apiDate}`;
         
         const res = await fetch(url);
         const data = await res.json();
 
-        if (data.mealServiceDietInfo) {
+        if (data.mealServiceDietInfo && data.mealServiceDietInfo[1].row) {
           const rawMealData = data.mealServiceDietInfo[1].row[0].DDISH_NTR_INFO;
           
-          // 알레르기 번호 제거 및 정제 처리
+          // 알레르기 수치 제거 및 텍스트 정리
           const cleanMealList = rawMealData
             .split('<br/>')
             .map(item => item.replace(/\([0-9.]+\)/g, '').trim())
@@ -84,26 +86,26 @@
           container.innerHTML = `
             <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
               <p class="text-amber-700 font-bold text-sm">오늘 등록된 급식 정보가 없습니다.</p>
-              <p class="text-amber-500 text-xs mt-1">주말이거나 식단표 미등록 상태입니다.</p>
+              <p class="text-amber-500 text-xs mt-1">주말, 휴교일 또는 식단 미등록 상태입니다.</p>
             </div>
           `;
         }
       } catch (error) {
-        console.error("급식 불러오기 오류:", error);
+        console.error("급식 데이터 통신 오류:", error);
         container.innerHTML = `
           <div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
             <p class="text-red-600 font-bold text-sm">급식 정보를 불러오지 못했습니다.</p>
-            <p class="text-red-400 text-xs mt-1">네트워크 상태를 확인해 주세요.</p>
+            <p class="text-red-400 text-xs mt-1">네트워크 연결 상태를 확인해 주세요.</p>
           </div>
         `;
       }
 
-      // 마지막 업데이트 시간 표시
       const now = new Date();
-      document.getElementById('lastUpdated').innerText = `최종 갱신: ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('lastUpdated').innerText = `최종 갱신: ${hours}:${minutes}`;
     }
 
-    // UI 렌더링
     function renderMealList(list) {
       const container = document.getElementById('mealContainer');
       container.innerHTML = "";
@@ -119,7 +121,7 @@
       });
     }
 
-    // 첫 로드 및 1분마다 자동 실시간 갱신 (자정 넘어갈 시 자동 변경)
+    // 최초 호출 및 1분마다 자동 실시간 갱신
     fetchMealData();
     setInterval(fetchMealData, 60000);
   </script>
